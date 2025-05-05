@@ -1,0 +1,20 @@
+<script src="https://cdn.jsdelivr.net/gh/kitao/pyxel/wasm/pyxel.js"></script>
+<body></body>
+<script>
+  const isGitHubPages = window.location.hostname === "yamagame.github.io"
+  if (isGitHubPages) {
+    const pyxelPlay = document.createElement("pyxel-play")
+    // pyxelPlay.setAttribute("gamepad", "enabled")
+    pyxelPlay.setAttribute("name", "copilot-adventure.pyxapp")
+    pyxelPlay.setAttribute("packages", "")
+    pyxelPlay.setAttribute("root", "/copilot-adventure/out")
+    document.body.appendChild(pyxelPlay)
+  } else {
+    const pyxelRun = document.createElement("pyxel-run")
+    pyxelRun.setAttribute("gamepad", "enabled")
+    pyxelRun.setAttribute("name", "main.py")
+    pyxelRun.setAttribute("packages", "")
+    pyxelRun.setAttribute("root", "./src/")
+    document.body.appendChild(pyxelRun)
+  }
+</script>

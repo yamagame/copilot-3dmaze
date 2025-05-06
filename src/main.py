@@ -7,59 +7,10 @@
 import pyxel
 import math
 import random
-
-class TitleState:
-    def __init__(self, game):
-        self.game = game
-
-    def update(self):
-        if pyxel.btnp(pyxel.KEY_SPACE):
-            self.game.reset_game()
-            self.game.state = GameState(self.game)
-
-    def draw(self):
-        pyxel.cls(0)
-        pyxel.text(80, 100, "MAZE ADVENTURE", pyxel.frame_count % 16)
-        pyxel.text(60, 140, "PRESS SPACE TO START", 7)
-
-class GameState:
-    def __init__(self, game):
-        self.game = game
-
-    def update(self):
-        self.game.update_player()
-        self.game.update_monsters()
-        self.game.check_collisions()
-
-    def draw(self):
-        self.game.draw_maze()
-        self.game.draw_entities()
-
-class ClearState:
-    def __init__(self, game):
-        self.game = game
-
-    def update(self):
-        if pyxel.btnp(pyxel.KEY_R):
-            self.game.state = TitleState(self.game)
-
-    def draw(self):
-        pyxel.cls(0)
-        pyxel.text(100, 120, "CONGRATULATIONS!", 10)
-        pyxel.text(80, 140, "YOU REACHED THE GOAL!", 7)
-
-class GameOverState:
-    def __init__(self, game):
-        self.game = game
-
-    def update(self):
-        if pyxel.btnp(pyxel.KEY_R):
-            self.game.state = TitleState(self.game)
-
-    def draw(self):
-        pyxel.cls(0)
-        pyxel.text(100, 120, "GAME OVER", 8)
-        pyxel.text(80, 140, "PRESS R TO RESTART", 7)
+from state.title_state import TitleState
+from state.game_state import GameState
+from state.clear_state import ClearState
+from state.gameover_state import GameOverState
 
 class AdventureGame:
     def __init__(self):

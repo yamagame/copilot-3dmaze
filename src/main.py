@@ -1,7 +1,7 @@
-# title: Copilot Adventure
+# title: Copilot 3dmaze
 # author: yamagame
 # desc: Sample pyxel shooting game with GitHub Copilot
-# site: https://github.com/yamagame/copilot-adventure
+# site: https://github.com/yamagame/copilot-3dmaze
 # license: MIT
 # version: 0.1
 import pyxel
@@ -113,13 +113,6 @@ class AdventureGame:
         if self.monster_move_timer >= 90:  # Move monsters every 90 frames (1.5 seconds at 60 FPS)
             for monster in self.monsters:
                 monster.move(self.maze.grid)
-
-                # # Calculate distance between player and monster
-                # distance = math.sqrt((self.player.x - monster.x) ** 2 + (self.player.y - monster.y) ** 2)
-
-                # # Adjust volume based on distance (closer = louder, farther = quieter)
-                # volume = max(0, 7 - int(distance))  # Volume decreases with distance, minimum 0
-                # pyxel.sound(0).set_volumes(volume)  # Play sound with adjusted volume
                 pyxel.play(0, 0, loop=False)
 
             self.monster_move_timer = 0  # Reset the timer
@@ -128,6 +121,7 @@ class AdventureGame:
     def check_collision(self):
         for monster in self.monsters:
             if monster.collides_with(self.player):
+                pyxel.play(1, 1, loop=False)  # Sound for trap collision
                 self.state = GameOverState(self)
                 return
 

@@ -131,6 +131,27 @@ class AdventureGame:
                 return True
         return False
 
+    def move_player(self, speed):
+        old_x = self.player_x
+        old_y = self.player_y
+        new_x = self.player_x + math.cos(self.player_angle) * speed
+        new_y = self.player_y + math.sin(self.player_angle) * speed
+
+        if self.maze[int(new_y)][int(self.player_x)] == 0:
+            self.player_y = new_y
+        elif self.maze[int(new_y)][int(self.player_x)] == 1:
+            self.player_x += math.cos(self.player_angle) * speed * 0.1  # Slide along the wall
+
+        if self.maze[int(self.player_y)][int(new_x)] == 0:
+            self.player_x = new_x
+        elif self.maze[int(self.player_y)][int(new_x)] == 1:
+            self.player_y += math.sin(self.player_angle) * speed * 0.1  # Slide along the wall
+
+        # After sliding, if the player is still inside a wall, reset the player's position
+        if self.maze[int(self.player_y)][int(self.player_x)] == 1:
+            self.player_x = old_x
+            self.player_y = old_y
+
     def update_player(self):
         if pyxel.btn(pyxel.KEY_UP):
             self.player_move = pyxel.KEY_UP
@@ -144,17 +165,9 @@ class AdventureGame:
         if pyxel.btn(pyxel.KEY_RIGHT):
             self.player_angle += 0.1
         if self.player_move == pyxel.KEY_UP:
-            new_x = self.player_x + math.cos(self.player_angle) * 0.1
-            new_y = self.player_y + math.sin(self.player_angle) * 0.1
-            if self.maze[int(new_y)][int(new_x)] == 0:
-                self.player_x = new_x
-                self.player_y = new_y
+            self.move_player(0.1)
         if self.player_move == pyxel.KEY_DOWN:
-            new_x = self.player_x - math.cos(self.player_angle) * 0.1
-            new_y = self.player_y - math.sin(self.player_angle) * 0.1
-            if self.maze[int(new_y)][int(new_x)] == 0:
-                self.player_x = new_x
-                self.player_y = new_y
+            self.move_player(-0.1)
 
     def check_collisions(self):
         self.check_collision()
@@ -223,7 +236,7 @@ class AdventureGame:
             if is_goal:
                 color = 8
             else:
-                far = 10
+                far = 5
                 if distance_to_wall > far:
                     distance_to_wall = far
                 color = 16+int((distance_to_wall/far)*16)

@@ -1,6 +1,6 @@
 # title: Copilot 3dmaze
 # author: yamagame
-# desc: Sample pyxel shooting game with GitHub Copilot
+# desc: Sample pyxel 3d maze game with GitHub Copilot
 # site: https://github.com/yamagame/copilot-3dmaze
 # license: MIT
 # version: 0.1

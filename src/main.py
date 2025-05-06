@@ -18,7 +18,7 @@ from entities.maze import Maze
 
 class AdventureGame:
     def __init__(self):
-        pyxel.init(256, 240, title="Maze Adventure")
+        pyxel.init(256, 240, title="Copilot 3DMaze")
         pyxel.mouse(True)
 
         # Initialize sound data
@@ -301,9 +301,11 @@ class AdventureGame:
             key_overlay_x = pyxel.width - 16  # Adjust position for a 16x16 key icon
             key_overlay_y = pyxel.height - 16
             pyxel.rect(key_overlay_x, key_overlay_y, 16, 16, 14)  # Pink background for the key
-            pyxel.text(key_overlay_x + 4, key_overlay_y + 4, "K", 7)  # 'K' to represent the key
+            pyxel.text(key_overlay_x + 4, key_overlay_y + 4, "Key", 7)  # 'K' to represent the key
 
-        # Display the current stage in the top-left corner
-        pyxel.text(5, 5, f"Stage: {self.current_stage}/{self.total_stages}", 7)
+        # Display the current stage in the top-right corner
+        stage_text = f"Stage: {self.current_stage}/{self.total_stages}"
+        text_width = len(stage_text) * 4  # Approximate width of the text
+        pyxel.text(pyxel.width - text_width - 5, 5, stage_text, 7)
 
 AdventureGame()

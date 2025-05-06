@@ -32,16 +32,13 @@ class Maze:
         maze[1][1] = 0
         maze[self.height - 2][self.width - 2] = 0
 
+        wall_count = random.randint(3,5)
+
         # Randomly set some walls to empty spaces
         for y in range(1, self.height-1):
             for x in range(1, self.width-1):
-                if maze[y][x] == 0:
-                    wall_count = 0
-                    for dx, dy in [(0, -1), (1, 0), (0, 1), (-1, 0)]:
-                        if maze[y+dy][x+dx] == 1:
-                            wall_count += 1
-
-                    if wall_count == 2 and random.random() < 0.5:
+                if maze[y][x] == 1:
+                    if random.randint(0,6) < wall_count:
                         directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]
                         random.shuffle(directions)
                         for dx, dy in directions:

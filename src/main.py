@@ -11,6 +11,9 @@ from state.title_state import TitleState
 from state.game_state import GameState
 from state.clear_state import ClearState
 from state.gameover_state import GameOverState
+from entities.monster import Monster
+from entities.player import Player
+from entities.trap import Trap
 
 class AdventureGame:
     def __init__(self):
@@ -120,20 +123,19 @@ class AdventureGame:
         self.maze = self.generate_maze(31, 31)
         self.goal_x = len(self.maze[0]) - 2
         self.goal_y = len(self.maze) - 2
-        self.player_x = 1.5
-        self.player_y = 1.5
-        self.player_angle = math.pi / 2
-        self.player_move = pyxel.KEY_UNKNOWN
-        self.monsters = [(len(self.maze[0]) - 3, len(self.maze) - 3), (len(self.maze[0]) - 5, len(self.maze) - 3), (len(self.maze[0]) - 3, len(self.maze) - 5)]
+        self.player = Player(1.5, 1.5, math.pi / 2)
+        self.monsters = [Monster(len(self.maze[0]) - 3, len(self.maze) - 3),
+                         Monster(len(self.maze[0]) - 5, len(self.maze) - 3),
+                         Monster(len(self.maze[0]) - 3, len(self.maze) - 5)]
+        self.traps = [Trap(x, y) for x, y in self.place_traps(10)]
         self.monster_move_timer = 0  # Timer to control monster movement
-        self.traps = self.place_traps(10)
         self.key = self.place_key()
         self.has_key = False  # Track if the player has collected the key
         self.ensure_player_start_position()
 
     def ensure_player_start_position(self):
         # Ensure the player's starting position is not a wall
-        self.maze[int(self.player_y)][int(self.player_x)] = 0
+        self.maze[int(self.player.y)][int(self.player.x)] = 0
 
     def place_traps(self, num_traps):
         traps = []
@@ -152,75 +154,66 @@ class AdventureGame:
 
     def update_monsters(self):
         if self.monster_move_timer >= 90:  # Move monsters every 90 frames (1.5 seconds at 60 FPS)
-            new_monsters = []
-            for mx, my in self.monsters:
-                possible_moves = []
-                for dx, dy in [(0, -1), (1, 0), (0, 1), (-1, 0)]:  # Up, Right, Down, Left
-                    nx, ny = mx + dx, my + dy
-                    if self.maze[ny][nx] == 0:  # Check if the space is open
-                        possible_moves.append((nx, ny))
-                if possible_moves:
-                    new_monsters.append(random.choice(possible_moves))  # Choose a random valid move
-                else:
-                    new_monsters.append((mx, my))  # Stay in place if no move is possible
-            self.monsters = new_monsters
+            for monster in self.monsters:
+                monster.move(self.maze)
             self.monster_move_timer = 0  # Reset the timer
             pyxel.play(0, 0, loop=False)  # Simple sound for monster movement
         self.monster_move_timer += 1
 
     def check_collision(self):
-        for mx, my in self.monsters:
-            if int(self.player_x) == mx and int(self.player_y) == my:
+        for monster in self.monsters:
+            if monster.collides_with(self.player):
                 self.state = GameOverState(self)
+                return
 
     def check_key_collision(self):
-        if not self.has_key and int(self.player_x) == self.key[0] and int(self.player_y) == self.key[1]:
+        if not self.has_key and int(self.player.x) == self.key[0] and int(self.player.y) == self.key[1]:
             self.has_key = True
             pyxel.play(2,  2, loop=False)  # Sound for collecting the key
 
     def check_trap_collision(self):
-        for tx, ty in self.traps:
-            if int(self.player_x) == tx and int(self.player_y) == ty:
+        for trap in self.traps:
+            if trap.collides_with(self.player):
                 pyxel.play(1, 1, loop=False)  # Sound for trap collision
                 return True
         return False
 
     def move_player(self, speed):
-        old_x = self.player_x
-        old_y = self.player_y
-        new_x = self.player_x + math.cos(self.player_angle) * speed
-        new_y = self.player_y + math.sin(self.player_angle) * speed
+        old_x = self.player.x
+        old_y = self.player.y
+        new_x = self.player.x + math.cos(self.player.angle) * speed
+        new_y = self.player.y + math.sin(self.player.angle) * speed
 
-        if self.maze[int(new_y)][int(self.player_x)] == 0:
-            self.player_y = new_y
-        elif self.maze[int(new_y)][int(self.player_x)] == 1:
-            self.player_x += math.cos(self.player_angle) * speed * 0.1  # Slide along the wall
+        if self.maze[int(new_y)][int(self.player.x)] == 0:
+            self.player.y = new_y
+        elif self.maze[int(new_y)][int(self.player.x)] == 1:
+            self.player.x += math.cos(self.player.angle) * speed * 0.1  # Slide along the wall
 
-        if self.maze[int(self.player_y)][int(new_x)] == 0:
-            self.player_x = new_x
-        elif self.maze[int(self.player_y)][int(new_x)] == 1:
-            self.player_y += math.sin(self.player_angle) * speed * 0.1  # Slide along the wall
+        if self.maze[int(self.player.y)][int(new_x)] == 0:
+            self.player.x = new_x
+        elif self.maze[int(self.player.y)][int(new_x)] == 1:
+            self.player.y += math.sin(self.player.angle) * speed * 0.1  # Slide along the wall
 
         # After sliding, if the player is still inside a wall, reset the player's position
-        if self.maze[int(self.player_y)][int(self.player_x)] == 1:
-            self.player_x = old_x
-            self.player_y = old_y
+        if self.maze[int(self.player.y)][int(self.player.x)] == 1:
+            self.player.x = old_x
+            self.player.y = old_y
 
     def update_player(self):
         if pyxel.btn(pyxel.KEY_UP):
-            self.player_move = pyxel.KEY_UP
+            self.player.move = pyxel.KEY_UP
         elif pyxel.btn(pyxel.KEY_DOWN):
-            self.player_move = pyxel.KEY_DOWN
+            self.player.move = pyxel.KEY_DOWN
         else:
-            self.player_move = pyxel.KEY_UNKNOWN
+            self.player.move = pyxel.KEY_UNKNOWN
 
         if pyxel.btn(pyxel.KEY_LEFT):
-            self.player_angle -= 0.1
+            self.player.angle -= 0.1
         if pyxel.btn(pyxel.KEY_RIGHT):
-            self.player_angle += 0.1
-        if self.player_move == pyxel.KEY_UP:
+            self.player.angle += 0.1
+        if self.player.move == pyxel.KEY_UP:
             self.move_player(0.1)
-        if self.player_move == pyxel.KEY_DOWN:
+        if self.player.move == pyxel.KEY_DOWN:
             self.move_player(-0.1)
 
     def check_collisions(self):
@@ -229,10 +222,10 @@ class AdventureGame:
         if self.check_trap_collision():
             self.maze = self.generate_maze(31, 31)
             self.ensure_player_start_position()
-            self.traps = self.place_traps(10)
+            self.traps = [Trap(x, y) for x, y in self.place_traps(10)]
             self.key = self.place_key()
             self.has_key = False
-        if self.has_key and int(self.player_x) == self.goal_x and int(self.player_y) == self.goal_y:
+        if self.has_key and int(self.player.x) == self.goal_x and int(self.player.y) == self.goal_y:
             if self.current_stage < self.total_stages:
                 self.current_stage += 1
                 self.reset_game()
@@ -249,7 +242,7 @@ class AdventureGame:
         # Draw the goal in the 3D maze only if the player has the key
         if self.has_key:
             for ray in range(0, pyxel.width, 2):
-                ray_angle = self.player_angle - 0.5 + (ray / pyxel.width)
+                ray_angle = self.player.angle - 0.5 + (ray / pyxel.width)
                 distance_to_wall = 0
                 is_goal = False
 
@@ -258,8 +251,8 @@ class AdventureGame:
 
                 while not is_goal and distance_to_wall < 30:
                     distance_to_wall += 0.1
-                    test_x = int(self.player_x + eye_x * distance_to_wall)
-                    test_y = int(self.player_y + eye_y * distance_to_wall)
+                    test_x = int(self.player.x + eye_x * distance_to_wall)
+                    test_y = int(self.player.y + eye_y * distance_to_wall)
 
                     if test_x == self.goal_x and test_y == self.goal_y:
                         is_goal = True
@@ -274,7 +267,7 @@ class AdventureGame:
 
         # Draw the walls in the 3D maze
         for ray in range(0, pyxel.width, 2):
-            ray_angle = self.player_angle - 0.5 + (ray / pyxel.width)
+            ray_angle = self.player.angle - 0.5 + (ray / pyxel.width)
             distance_to_wall = 0
             hit_wall = False
             is_goal = False
@@ -284,8 +277,8 @@ class AdventureGame:
 
             while not hit_wall and distance_to_wall < 30:
                 distance_to_wall += 0.1
-                test_x = int(self.player_x + eye_x * distance_to_wall)
-                test_y = int(self.player_y + eye_y * distance_to_wall)
+                test_x = int(self.player.x + eye_x * distance_to_wall)
+                test_y = int(self.player.y + eye_y * distance_to_wall)
 
                 if test_x < 0 or test_x >= len(self.maze[0]) or test_y < 0 or test_y >= len(self.maze):
                     hit_wall = True
@@ -314,8 +307,8 @@ class AdventureGame:
 
     def draw_entities(self):
         map_scale = 4  # Doubled the size of the 2D map
-        player_x = int(self.player_x)
-        player_y = int(self.player_y)
+        player_x = int(self.player.x)
+        player_y = int(self.player.y)
 
         # Draw a 10x10 area around the player
         for y in range(max(0, player_y - 5), min(len(self.maze), player_y + 5)):
@@ -335,14 +328,14 @@ class AdventureGame:
             pyxel.rect((self.goal_x - player_x + 5) * map_scale, (self.goal_y - player_y + 5) * map_scale, map_scale, map_scale, 8)
 
         # Draw monsters if within the 10x10 area
-        for mx, my in self.monsters:
-            if abs(mx - player_x) <= 5 and abs(my - player_y) <= 5:
-                pyxel.circ((mx - player_x + 5) * map_scale + map_scale // 2, (my - player_y + 5) * map_scale + map_scale // 2, map_scale // 2, 8)  # Red for monsters
+        for monster in self.monsters:
+            if abs(monster.x - player_x) <= 5 and abs(monster.y - player_y) <= 5:
+                pyxel.circ((monster.x - player_x + 5) * map_scale + map_scale // 2, (monster.y - player_y + 5) * map_scale + map_scale // 2, map_scale // 2, 8)  # Red for monsters
 
         # Draw traps if within the 10x10 area
-        for tx, ty in self.traps:
-            if abs(tx - player_x) <= 5 and abs(ty - player_y) <= 5:
-                pyxel.circ((tx - player_x + 5) * map_scale + map_scale // 2, (ty - player_y + 5) * map_scale + map_scale // 2, map_scale // 2, 10)  # Yellow for traps
+        for trap in self.traps:
+            if abs(trap.x - player_x) <= 5 and abs(trap.y - player_y) <= 5:
+                pyxel.circ((trap.x - player_x + 5) * map_scale + map_scale // 2, (trap.y - player_y + 5) * map_scale + map_scale // 2, map_scale // 2, 10)  # Yellow for traps
 
         # Draw a border around the 2D map
         border_x = 5 * map_scale - map_scale // 2

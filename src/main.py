@@ -87,6 +87,9 @@ class AdventureGame:
         self.key = self.place_key()
         self.has_key = False
         self.ensure_player_start_position()
+        self.mouse_dragging = False  # Track mouse dragging state
+        self.last_mouse_x = pyxel.mouse_x
+        self.last_mouse_y = pyxel.mouse_y
 
     def ensure_player_start_position(self):
         self.maze.set_empty(int(self.player.x), int(self.player.y))
@@ -153,11 +156,35 @@ class AdventureGame:
             self.player.y = old_y
 
     def update_player(self):
+        # Handle mouse dragging for rotation
+        if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
+            if not self.mouse_dragging:
+                self.mouse_dragging = True
+                self.last_mouse_x = pyxel.mouse_x
+                self.last_mouse_y = pyxel.mouse_y
+            else:
+                dx = pyxel.mouse_x - self.last_mouse_x
+                self.player.angle += dx * 0.02
+                self.last_mouse_x = pyxel.mouse_x
+
+        else:
+            self.last_mouse_x = pyxel.mouse_x
+            self.last_mouse_y = pyxel.mouse_y
+            self.mouse_dragging = False
+
         if pyxel.btn(pyxel.KEY_UP):
             self.player.move = pyxel.KEY_UP
         elif pyxel.btn(pyxel.KEY_DOWN):
             self.player.move = pyxel.KEY_DOWN
+        # Handle forward/backward movement based on vertical mouse drag
+        elif pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
+            dy = pyxel.mouse_y - self.last_mouse_y
+            if abs(dy) > 4:  # Check if vertical drag exceeds 4 pixels
+                self.player.move = pyxel.KEY_UP if dy < 0 else pyxel.KEY_DOWN
+            else:
+                self.player.move = pyxel.KEY_UNKNOWN
         else:
+            self.last_mouse_y = pyxel.mouse_y  # Reset vertical drag tracking when button is released
             self.player.move = pyxel.KEY_UNKNOWN
 
         if pyxel.btn(pyxel.KEY_LEFT):

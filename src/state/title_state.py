@@ -12,7 +12,7 @@ class TitleState:
 
     def draw(self):
         pyxel.cls(0)
-        title_text = "MAZE ADVENTURE"
+        title_text = "Copilot 3D Maze"
         press_text = "PRESS SPACE TO START"
         title_x = (pyxel.width - len(title_text) * 4) // 2
         press_x = (pyxel.width - len(press_text) * 4) // 2

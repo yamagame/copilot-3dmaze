@@ -16,6 +16,10 @@ class AdventureGame:
     def __init__(self):
         pyxel.init(256, 240, title="Maze Adventure")
         pyxel.mouse(True)
+
+        # Initialize sound data
+        self._init_sounds()
+
         # Define 16 shades from white to blue in pyxel.colors
         self.wallcolor = [0x000000] * 16
         def shade(min, max, step):
@@ -26,7 +30,29 @@ class AdventureGame:
         pyxel.colors.from_list(old_colors+self.wallcolor)
         self.reset_game()
         self.state = TitleState(self)
+        self.current_stage = 1  # Track the current stage
+        self.total_stages = 3  # Total number of stages updated to 3
         pyxel.run(self.update, self.draw)
+
+    def _init_sounds(self):
+        """Initialize sound effects"""
+        # Sound 0: モンスター移動
+        pyxel.sound(0).set(
+            "c1e1g1c3",
+            "p",
+            "4444",
+            "n",
+            3
+        )
+        
+        # Sound 1: Collision with trap
+        pyxel.sound(1).set(
+            "f2g2a2b2a2g2f2f2g2a2b2a2g2f2",
+            "p",
+            "44444444444444",
+            "n",
+            5
+        )
 
     def update(self):
         self.state.update()
@@ -92,6 +118,13 @@ class AdventureGame:
         self.monsters = [(len(self.maze[0]) - 3, len(self.maze) - 3), (len(self.maze[0]) - 5, len(self.maze) - 3), (len(self.maze[0]) - 3, len(self.maze) - 5)]
         self.monster_move_timer = 0  # Timer to control monster movement
         self.traps = self.place_traps(10)
+        self.key = self.place_key()
+        self.has_key = False  # Track if the player has collected the key
+        self.ensure_player_start_position()
+
+    def ensure_player_start_position(self):
+        # Ensure the player's starting position is not a wall
+        self.maze[int(self.player_y)][int(self.player_x)] = 0
 
     def place_traps(self, num_traps):
         traps = []
@@ -103,6 +136,10 @@ class AdventureGame:
                 traps.append(trap_pos)
                 empty_cells.remove(trap_pos)
         return traps
+
+    def place_key(self):
+        empty_cells = [(x, y) for y in range(1, len(self.maze) - 1) for x in range(1, len(self.maze[0]) - 1) if self.maze[y][x] == 0]
+        return random.choice(empty_cells) if empty_cells else (1, 1)
 
     def update_monsters(self):
         if self.monster_move_timer >= 90:  # Move monsters every 90 frames (1.5 seconds at 60 FPS)
@@ -119,6 +156,7 @@ class AdventureGame:
                     new_monsters.append((mx, my))  # Stay in place if no move is possible
             self.monsters = new_monsters
             self.monster_move_timer = 0  # Reset the timer
+            pyxel.play(0, 0, loop=False)  # Simple sound for monster movement
         self.monster_move_timer += 1
 
     def check_collision(self):
@@ -126,9 +164,14 @@ class AdventureGame:
             if int(self.player_x) == mx and int(self.player_y) == my:
                 self.state = GameOverState(self)
 
+    def check_key_collision(self):
+        if not self.has_key and int(self.player_x) == self.key[0] and int(self.player_y) == self.key[1]:
+            self.has_key = True
+
     def check_trap_collision(self):
         for tx, ty in self.traps:
             if int(self.player_x) == tx and int(self.player_y) == ty:
+                pyxel.play(1, 1, loop=False)  # Sound for trap collision
                 return True
         return False
 
@@ -172,11 +215,19 @@ class AdventureGame:
 
     def check_collisions(self):
         self.check_collision()
+        self.check_key_collision()
         if self.check_trap_collision():
             self.maze = self.generate_maze(31, 31)
+            self.ensure_player_start_position()
             self.traps = self.place_traps(10)
-        if int(self.player_x) == self.goal_x and int(self.player_y) == self.goal_y:
-            self.state = ClearState(self)
+            self.key = self.place_key()
+            self.has_key = False
+        if self.has_key and int(self.player_x) == self.goal_x and int(self.player_y) == self.goal_y:
+            if self.current_stage < self.total_stages:
+                self.current_stage += 1
+                self.reset_game()
+            else:
+                self.state = ClearState(self)
 
     def draw_maze(self):
         # Clear the screen and draw the floor
@@ -185,30 +236,31 @@ class AdventureGame:
             floor = pyxel.height / 2
             pyxel.line(ray, floor, ray, pyxel.height, 3)  # Draw the floor in color 3
 
-        # Draw the goal in the 3D maze
-        for ray in range(0, pyxel.width, 2):
-            ray_angle = self.player_angle - 0.5 + (ray / pyxel.width)
-            distance_to_wall = 0
-            is_goal = False
+        # Draw the goal in the 3D maze only if the player has the key
+        if self.has_key:
+            for ray in range(0, pyxel.width, 2):
+                ray_angle = self.player_angle - 0.5 + (ray / pyxel.width)
+                distance_to_wall = 0
+                is_goal = False
 
-            eye_x = math.cos(ray_angle)
-            eye_y = math.sin(ray_angle)
+                eye_x = math.cos(ray_angle)
+                eye_y = math.sin(ray_angle)
 
-            while not is_goal and distance_to_wall < 30:
-                distance_to_wall += 0.1
-                test_x = int(self.player_x + eye_x * distance_to_wall)
-                test_y = int(self.player_y + eye_y * distance_to_wall)
+                while not is_goal and distance_to_wall < 30:
+                    distance_to_wall += 0.1
+                    test_x = int(self.player_x + eye_x * distance_to_wall)
+                    test_y = int(self.player_y + eye_y * distance_to_wall)
 
-                if test_x == self.goal_x and test_y == self.goal_y:
-                    is_goal = True
+                    if test_x == self.goal_x and test_y == self.goal_y:
+                        is_goal = True
 
-            ceiling = int(pyxel.height / 2 - pyxel.height / distance_to_wall)
-            floor = pyxel.height - ceiling
+                ceiling = int(pyxel.height / 2 - pyxel.height / distance_to_wall)
+                floor = pyxel.height - ceiling
 
-            color = 8  # Red for the goal
+                color = 8  # Red for the goal
 
-            if is_goal:
-                pyxel.line(ray, 0, ray, floor, color)  # Draw the goal
+                if is_goal:
+                    pyxel.line(ray, 0, ray, floor, color)  # Draw the goal
 
         # Draw the walls in the 3D maze
         for ray in range(0, pyxel.width, 2):
@@ -264,8 +316,12 @@ class AdventureGame:
         # Draw player position in the center of the 10x10 map
         pyxel.circ(5 * map_scale, 5 * map_scale, map_scale, 11)
 
-        # Draw the goal if within the 10x10 area
-        if abs(self.goal_x - player_x) <= 5 and abs(self.goal_y - player_y) <= 5:
+        # Draw the key if within the 10x10 area and not yet collected
+        if not self.has_key and abs(self.key[0] - player_x) <= 5 and abs(self.key[1] - player_y) <= 5:
+            pyxel.circ((self.key[0] - player_x + 5) * map_scale + map_scale // 2, (self.key[1] - player_y + 5) * map_scale + map_scale // 2, map_scale // 2, 14)  # Pink for the key
+
+        # Draw the goal if within the 10x10 area and the player has the key
+        if self.has_key and abs(self.goal_x - player_x) <= 5 and abs(self.goal_y - player_y) <= 5:
             pyxel.rect((self.goal_x - player_x + 5) * map_scale, (self.goal_y - player_y + 5) * map_scale, map_scale, map_scale, 8)
 
         # Draw monsters if within the 10x10 area
@@ -283,5 +339,15 @@ class AdventureGame:
         border_y = 5 * map_scale - map_scale // 2
         border_size = 10 * map_scale
         pyxel.rectb(border_x - border_size // 2+2, border_y - border_size // 2+2, border_size, border_size, 7)
+
+        # Draw the key overlay in the bottom-right corner if the player has the key
+        if self.has_key:
+            key_overlay_x = pyxel.width - 16  # Adjust position for a 16x16 key icon
+            key_overlay_y = pyxel.height - 16
+            pyxel.rect(key_overlay_x, key_overlay_y, 16, 16, 14)  # Pink background for the key
+            pyxel.text(key_overlay_x + 4, key_overlay_y + 4, "K", 7)  # 'K' to represent the key
+
+        # Display the current stage in the top-left corner
+        pyxel.text(5, 5, f"Stage: {self.current_stage}/{self.total_stages}", 7)
 
 AdventureGame()

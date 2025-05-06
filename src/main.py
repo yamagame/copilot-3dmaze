@@ -179,11 +179,13 @@ class AdventureGame:
             self.state = ClearState(self)
 
     def draw_maze(self):
+        # Clear the screen and draw the floor
         pyxel.cls(0)
         for ray in range(0, pyxel.width, 2):
-            floor = pyxel.height/2
-            pyxel.line(ray, floor, ray, pyxel.height, 3)
+            floor = pyxel.height / 2
+            pyxel.line(ray, floor, ray, pyxel.height, 3)  # Draw the floor in color 3
 
+        # Draw the goal in the 3D maze
         for ray in range(0, pyxel.width, 2):
             ray_angle = self.player_angle - 0.5 + (ray / pyxel.width)
             distance_to_wall = 0
@@ -203,11 +205,12 @@ class AdventureGame:
             ceiling = int(pyxel.height / 2 - pyxel.height / distance_to_wall)
             floor = pyxel.height - ceiling
 
-            color = 8
+            color = 8  # Red for the goal
 
             if is_goal:
-                pyxel.line(ray, 0, ray, floor, color)
+                pyxel.line(ray, 0, ray, floor, color)  # Draw the goal
 
+        # Draw the walls in the 3D maze
         for ray in range(0, pyxel.width, 2):
             ray_angle = self.player_angle - 0.5 + (ray / pyxel.width)
             distance_to_wall = 0
@@ -235,32 +238,50 @@ class AdventureGame:
             floor = pyxel.height - ceiling
 
             if is_goal:
-                color = 8
+                color = 8  # Red for the goal
             else:
                 far = 5
                 if distance_to_wall > far:
                     distance_to_wall = far
-                color = 16+int((distance_to_wall/far)*16)
+                color = 16 + int((distance_to_wall / far) * 16)  # Gradient for walls
 
             if is_goal:
-                pass
+                pass  # Goal is already drawn
             elif hit_wall:
-                pyxel.line(ray, ceiling, ray, floor, color)
+                pyxel.line(ray, ceiling, ray, floor, color)  # Draw the wall
 
     def draw_entities(self):
-        map_scale = 2
-        for y, row in enumerate(self.maze):
-            for x, cell in enumerate(row):
-                color = 7 if cell == 1 else 0
-                pyxel.rect(x * map_scale, y * map_scale, map_scale, map_scale, color)
+        map_scale = 4  # Doubled the size of the 2D map
+        player_x = int(self.player_x)
+        player_y = int(self.player_y)
 
-        pyxel.circ(int(self.player_x * map_scale), int(self.player_y * map_scale), map_scale, 11)
-        pyxel.rect(self.goal_x * map_scale, self.goal_y * map_scale, map_scale, map_scale, 8)
+        # Draw a 10x10 area around the player
+        for y in range(max(0, player_y - 5), min(len(self.maze), player_y + 5)):
+            for x in range(max(0, player_x - 5), min(len(self.maze[0]), player_x + 5)):
+                color = 7 if self.maze[y][x] == 1 else 0
+                pyxel.rect((x - player_x + 5) * map_scale, (y - player_y + 5) * map_scale, map_scale, map_scale, color)
 
+        # Draw player position in the center of the 10x10 map
+        pyxel.circ(5 * map_scale, 5 * map_scale, map_scale, 11)
+
+        # Draw the goal if within the 10x10 area
+        if abs(self.goal_x - player_x) <= 5 and abs(self.goal_y - player_y) <= 5:
+            pyxel.rect((self.goal_x - player_x + 5) * map_scale, (self.goal_y - player_y + 5) * map_scale, map_scale, map_scale, 8)
+
+        # Draw monsters if within the 10x10 area
         for mx, my in self.monsters:
-            pyxel.circ(mx * map_scale + map_scale // 2, my * map_scale + map_scale // 2, map_scale // 2, 9)
+            if abs(mx - player_x) <= 5 and abs(my - player_y) <= 5:
+                pyxel.circ((mx - player_x + 5) * map_scale + map_scale // 2, (my - player_y + 5) * map_scale + map_scale // 2, map_scale // 2, 8)  # Red for monsters
 
+        # Draw traps if within the 10x10 area
         for tx, ty in self.traps:
-            pyxel.circ(tx * map_scale + map_scale // 2, ty * map_scale + map_scale // 2, map_scale // 2, 12)
+            if abs(tx - player_x) <= 5 and abs(ty - player_y) <= 5:
+                pyxel.circ((tx - player_x + 5) * map_scale + map_scale // 2, (ty - player_y + 5) * map_scale + map_scale // 2, map_scale // 2, 10)  # Yellow for traps
+
+        # Draw a border around the 2D map
+        border_x = 5 * map_scale - map_scale // 2
+        border_y = 5 * map_scale - map_scale // 2
+        border_size = 10 * map_scale
+        pyxel.rectb(border_x - border_size // 2+2, border_y - border_size // 2+2, border_size, border_size, 7)
 
 AdventureGame()

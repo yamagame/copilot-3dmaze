@@ -12,5 +12,9 @@ class TitleState:
 
     def draw(self):
         pyxel.cls(0)
-        pyxel.text(80, 100, "MAZE ADVENTURE", pyxel.frame_count % 16)
-        pyxel.text(60, 140, "PRESS SPACE TO START", 7)
+        title_text = "MAZE ADVENTURE"
+        press_text = "PRESS SPACE TO START"
+        title_x = (pyxel.width - len(title_text) * 4) // 2
+        press_x = (pyxel.width - len(press_text) * 4) // 2
+        pyxel.text(title_x, 100, title_text, pyxel.frame_count % 16)
+        pyxel.text(press_x, 140, press_text, 7)

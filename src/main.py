@@ -40,26 +40,26 @@ class AdventureGame:
 
     def _init_sounds(self):
         """Initialize sound effects"""
-        # Sound 0: モンスター移動
-        pyxel.sound(0).set(
+        # Sound 0: Monster movement
+        pyxel.sounds[0].set(
             "c1e1g1c3",
             "p",
             "4444",
             "n",
             3
         )
-        
+
         # Sound 1: Collision with trap
-        pyxel.sound(1).set(
+        pyxel.sounds[1].set(
             "f2g2a2b2a2g2f2f2g2a2b2a2g2f2",
             "p",
             "44444444444444",
             "n",
             5
         )
-        
+
         # Sound 2: Key acquisition
-        pyxel.sound(2).set(
+        pyxel.sounds[2].set(
             "f3b4",
             "p",
             "44",
@@ -113,8 +113,16 @@ class AdventureGame:
         if self.monster_move_timer >= 90:  # Move monsters every 90 frames (1.5 seconds at 60 FPS)
             for monster in self.monsters:
                 monster.move(self.maze.grid)
+
+                # # Calculate distance between player and monster
+                # distance = math.sqrt((self.player.x - monster.x) ** 2 + (self.player.y - monster.y) ** 2)
+
+                # # Adjust volume based on distance (closer = louder, farther = quieter)
+                # volume = max(0, 7 - int(distance))  # Volume decreases with distance, minimum 0
+                # pyxel.sound(0).set_volumes(volume)  # Play sound with adjusted volume
+                pyxel.play(0, 0, loop=False)
+
             self.monster_move_timer = 0  # Reset the timer
-            pyxel.play(0, 0, loop=False)  # Simple sound for monster movement
         self.monster_move_timer += 1
 
     def check_collision(self):

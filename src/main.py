@@ -53,6 +53,15 @@ class AdventureGame:
             "n",
             5
         )
+        
+        # Sound 2: Key acquisition
+        pyxel.sound(2).set(
+            "f3b4",
+            "p",
+            "44",
+            "n",
+            10
+        )
 
     def update(self):
         self.state.update()
@@ -167,6 +176,7 @@ class AdventureGame:
     def check_key_collision(self):
         if not self.has_key and int(self.player_x) == self.key[0] and int(self.player_y) == self.key[1]:
             self.has_key = True
+            pyxel.play(2,  2, loop=False)  # Sound for collecting the key
 
     def check_trap_collision(self):
         for tx, ty in self.traps:

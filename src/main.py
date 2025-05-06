@@ -90,7 +90,7 @@ class AdventureGame:
         self.player_angle = math.pi / 2
         self.player_move = pyxel.KEY_UNKNOWN
         self.monsters = [(len(self.maze[0]) - 3, len(self.maze) - 3), (len(self.maze[0]) - 5, len(self.maze) - 3), (len(self.maze[0]) - 3, len(self.maze) - 5)]
-        self.monster_move_timer = 0
+        self.monster_move_timer = 0  # Timer to control monster movement
         self.traps = self.place_traps(10)
 
     def place_traps(self, num_traps):
@@ -105,19 +105,20 @@ class AdventureGame:
         return traps
 
     def update_monsters(self):
-        if self.monster_move_timer % 10 == 0:
+        if self.monster_move_timer >= 90:  # Move monsters every 90 frames (1.5 seconds at 60 FPS)
             new_monsters = []
             for mx, my in self.monsters:
                 possible_moves = []
-                for dx, dy in [(0, -1), (1, 0), (0, 1), (-1, 0)]:
+                for dx, dy in [(0, -1), (1, 0), (0, 1), (-1, 0)]:  # Up, Right, Down, Left
                     nx, ny = mx + dx, my + dy
-                    if self.maze[ny][nx] == 0:
+                    if self.maze[ny][nx] == 0:  # Check if the space is open
                         possible_moves.append((nx, ny))
                 if possible_moves:
-                    new_monsters.append(random.choice(possible_moves))
+                    new_monsters.append(random.choice(possible_moves))  # Choose a random valid move
                 else:
-                    new_monsters.append((mx, my))
+                    new_monsters.append((mx, my))  # Stay in place if no move is possible
             self.monsters = new_monsters
+            self.monster_move_timer = 0  # Reset the timer
         self.monster_move_timer += 1
 
     def check_collision(self):

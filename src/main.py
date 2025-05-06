@@ -172,9 +172,9 @@ class AdventureGame:
             self.last_mouse_y = pyxel.mouse_y
             self.mouse_dragging = False
 
-        if pyxel.btn(pyxel.KEY_UP):
+        if pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_UP):
             self.player.move = pyxel.KEY_UP
-        elif pyxel.btn(pyxel.KEY_DOWN):
+        elif pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_DOWN):
             self.player.move = pyxel.KEY_DOWN
         # Handle forward/backward movement based on vertical mouse drag
         elif pyxel.btn(pyxel.MOUSE_BUTTON_LEFT):
@@ -187,9 +187,9 @@ class AdventureGame:
             self.last_mouse_y = pyxel.mouse_y  # Reset vertical drag tracking when button is released
             self.player.move = pyxel.KEY_UNKNOWN
 
-        if pyxel.btn(pyxel.KEY_LEFT):
+        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_LEFT):
             self.player.angle -= 0.1
-        if pyxel.btn(pyxel.KEY_RIGHT):
+        if pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.GAMEPAD1_BUTTON_DPAD_RIGHT):
             self.player.angle += 0.1
         if self.player.move == pyxel.KEY_UP:
             self.move_player(0.1)
